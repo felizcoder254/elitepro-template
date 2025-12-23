@@ -1,7 +1,7 @@
-# Use an official PHP image with Apache
-FROM php:8.3-apache
+# Use PHP 8.2 with Apache
+FROM php:8.2-apache
 
-# Install system dependencies, Node.js, and Composer
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,10 +11,18 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     nodejs \
-    npm \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+    npm
 
-# Get latest Composer
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
@@ -23,18 +31,19 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Install PHP dependencies, generate the application key, and build assets
-RUN composer install --no-dev --optimize-autoloader \
-    && php artisan key:generate \
-    && npm install \
-    && npm run build
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
+RUN npm install && npm run build
 
-# Set proper permissions for Laravel storage and bootstrap cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage
 
-# Enable Apache mod_rewrite for pretty URLs
-RUN a2enmod rewrite
+# Copy Apache configuration
+COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80 and start Apache
+# Expose port 80
 EXPOSE 80
+
+# Start Apache
 CMD ["apache2-foreground"]
