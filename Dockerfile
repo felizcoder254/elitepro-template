@@ -89,5 +89,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # 10. Expose port
 EXPOSE 80
 
+# Create a direct PHP test file
+RUN echo "<?php header('Content-Type: text/plain'); echo 'PHP is working!\n'; echo 'Version: ' . phpversion() . '\n'; echo 'Extensions: ' . implode(', ', get_loaded_extensions()) . '\n'; ?>" > /var/www/html/public/test-direct.php
 # 11. Start Apache
 CMD ["apache2-foreground"]
