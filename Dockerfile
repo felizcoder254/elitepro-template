@@ -1,22 +1,11 @@
-# ─── Laravel with Apache ──────────────────────────────────────
-# Use PHP 8.4 to match your project's requirements
+# ─── Laravel with Apache & SQLite ─────────────────────────────
 FROM php:8.4-apache
 
-# 1. Install system dependencies WITH ICU libraries
+# 1. Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libwebp-dev \
-    libzip-dev \
-    libpq-dev \
-    libxml2-dev \
-    libonig-dev \
-    libicu-dev \
-    unzip \
-    zip \
+    git curl libpng-dev libjpeg-dev libfreetype6-dev \
+    libwebp-dev libzip-dev libpq-dev libxml2-dev libonig-dev \
+    libicu-dev unzip zip sqlite3 libsqlite3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,18 +13,8 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-configure intl \
     && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        pdo_pgsql \
-        zip \
-        gd \
-        bcmath \
-        mbstring \
-        exif \
-        pcntl \
-        xml \
-        opcache \
-        intl
+        pdo pdo_mysql pdo_pgsql pdo_sqlite \
+        zip gd bcmath mbstring exif pcntl xml opcache intl
 
 # 3. Install Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
@@ -57,39 +36,42 @@ RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/custom.ini
 
-# 6. Set working directory
+# 6. Set working directory and copy app
 WORKDIR /var/www/html
-
-# 7. Copy application files
 COPY . .
 
-# 8. Handle composer dependencies (with PHP version fix)
-# Remove composer.lock if it requires wrong PHP version
-RUN if [ -f composer.lock ]; then \
-        php -v; \
-        composer validate --no-check-all; \
-        if [ $? -ne 0 ]; then \
-            echo "Removing incompatible composer.lock..."; \
-            rm composer.lock; \
-        fi; \
+# 7. Create .env from Render environment variables
+RUN echo "APP_NAME=\"${APP_NAME:-Laravel}\"" >> .env \
+    && echo "APP_ENV=${APP_ENV:-production}" >> .env \
+    && echo "APP_KEY=${APP_KEY}" >> .env \
+    && echo "APP_DEBUG=${APP_DEBUG:-false}" >> .env \
+    && echo "APP_URL=${APP_URL:-http://localhost}" >> .env \
+    && echo "DB_CONNECTION=${DB_CONNECTION:-sqlite}" >> .env \
+    && echo "DB_DATABASE=${DB_DATABASE:-database/database.sqlite}" >> .env
+
+# 8. Create SQLite database file if using SQLite
+RUN if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then \
+    touch database/database.sqlite; \
+    chmod 666 database/database.sqlite; \
+    echo "SQLite database file created"; \
     fi
 
-# Install/update dependencies based on what exists
-RUN if [ -f composer.lock ]; then \
-        composer install --no-dev --optimize-autoloader --no-interaction; \
-    else \
-        composer update --no-dev --optimize-autoloader --no-interaction; \
-    fi
+# 9. Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 9. Set proper permissions
+# 10. Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# 10. Expose port
+# 11. Clear Laravel cache
+RUN php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
+
+# 12. Expose port
 EXPOSE 80
 
-# Create a direct PHP test file
-RUN echo "<?php header('Content-Type: text/plain'); echo 'PHP is working!\n'; echo 'Version: ' . phpversion() . '\n'; echo 'Extensions: ' . implode(', ', get_loaded_extensions()) . '\n'; ?>" > /var/www/html/public/test-direct.php
-# 11. Start Apache
+# 13. Start Apache
 CMD ["apache2-foreground"]
