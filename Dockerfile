@@ -1,21 +1,7 @@
-# ─── Stage 1: Build Frontend Assets (if needed) ─────────────────
-# Skip this stage if your project doesn't use Vite/Node.js
-FROM node:18-alpine AS frontend
-
-WORKDIR /app
-
-# Copy package files for better caching
-COPY package*.json ./
-RUN npm ci --only=production
-
-# Copy source and build
-COPY . .
-RUN npm run build 2>/dev/null || echo "No build script, continuing..."
-
-# ─── Stage 2: Runtime (PHP + Apache) ───────────────────────────
+# ─── Stage 1: Runtime (PHP + Apache) ───────────────────────────
 FROM php:8.3-apache
 
-# 1. Install system dependencies
+# 1. Install system dependencies WITH ICU libraries
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -27,16 +13,15 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libxml2-dev \
     libonig-dev \
+    libicu-dev \           # ← ADD THIS LINE for intl extension
     unzip \
     zip \
-    # Optional: Add Node.js if you need it at runtime
-    # nodejs \
-    # npm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure intl \  # ← ADD THIS LINE to configure intl
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
@@ -49,7 +34,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         pcntl \
         xml \
         opcache \
-        intl
+        intl             # This will now work with libicu-dev installed
 
 # 3. Install Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
@@ -76,10 +61,8 @@ WORKDIR /var/www/html
 
 # 7. Copy application files
 COPY . .
-# Copy built assets from frontend stage (if you use it)
-# COPY --from=frontend /app/public/build ./public/build/
 
-# 8. Install PHP dependencies (handles PHP version mismatch)
+# 8. Install PHP dependencies
 RUN if [ -f composer.lock ]; then \
         composer install --no-dev --optimize-autoloader --no-interaction; \
     else \
@@ -91,12 +74,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# 10. Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
-
-# 11. Expose port
+# 10. Expose port
 EXPOSE 80
 
-# 12. Start Apache
+# 11. Start Apache
 CMD ["apache2-foreground"]
