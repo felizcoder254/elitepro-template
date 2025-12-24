@@ -1,11 +1,10 @@
-# ─── Laravel with Apache & SQLite ─────────────────────────────
+# ─── Laravel with Apache & PostgreSQL ─────────────────────────────
 FROM php:8.4-apache
 
-# 1. Install ALL system dependencies including libonig-dev
+# 1. Install system dependencies including PostgreSQL
 RUN apt-get update && apt-get install -y \
-    git curl libzip-dev libsqlite3-dev sqlite3 \
-    libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev \
-    libxml2-dev libicu-dev libonig-dev \
+    git curl libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    libwebp-dev libxml2-dev libicu-dev libonig-dev libpq-dev \
     unzip zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -13,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 # 2. Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
-        pdo pdo_mysql pdo_sqlite \
+        pdo pdo_mysql pdo_pgsql \
         zip gd bcmath mbstring exif pcntl xml intl
 
 # 3. Install Composer
@@ -43,43 +42,19 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# 8. Create fresh .env file with ALL required variables
-RUN rm -f .env && \
-    echo "APP_NAME=Laravel" > .env && \
-    echo "APP_ENV=local" >> .env && \
-    echo "APP_DEBUG=true" >> .env && \
-    echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env && \
-    echo "DB_CONNECTION=sqlite" >> .env && \
-    echo "DB_DATABASE=/var/www/html/database/database.sqlite" >> .env && \
-    echo "SESSION_DRIVER=file" >> .env && \
-    echo "CACHE_DRIVER=file" >> .env && \
-    echo "MAIL_MAILER=log" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env && \
-    echo "APP_KEY=" >> .env
+# 8. Create minimal .env (Render environment vars will override)
+RUN echo "APP_ENV=production" > .env \
+    && echo "APP_DEBUG=false" >> .env \
+    && echo "APP_KEY=" >> .env
 
-# 9. Create SQLite database
-RUN touch database/database.sqlite \
-    && chmod 666 database/database.sqlite
-
-# 10. Install Composer dependencies
+# 9. Install Composer dependencies
 RUN composer install --no-interaction --no-progress --no-suggest
 
-# 11. Generate APP_KEY
+# 10. Generate APP_KEY
 RUN php artisan key:generate --force
 
-# 12. Run database migrations
-RUN php artisan migrate --force --no-interaction
-
-# 13. Clear Laravel caches
-RUN php artisan config:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
-# 14. Create test file
-RUN echo "<?php echo 'PHP is working'; ?>" > /var/www/html/public/test.php
-
-# 15. Expose port
+# 11. Expose port
 EXPOSE 80
 
-# 16. Start Apache
+# 12. Start Apache
 CMD ["apache2-foreground"]
