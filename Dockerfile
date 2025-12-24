@@ -97,3 +97,11 @@ EXPOSE 80
 
 # 16. Start Apache
 CMD ["apache2-foreground"]
+
+# Add this BEFORE the caching commands
+RUN php artisan route:clear
+
+# Then run your caching commands
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
