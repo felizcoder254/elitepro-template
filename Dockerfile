@@ -58,3 +58,10 @@ EXPOSE 80
 
 # 12. Start Apache
 CMD ["apache2-foreground"]
+
+# Copy deploy script
+COPY deploy.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/deploy.sh
+
+# Update CMD
+CMD ["/usr/local/bin/deploy.sh"]
