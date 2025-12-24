@@ -75,3 +75,11 @@ Route::middleware(['auth'])->group(function () {
         return view('settings');
     })->name('settings');
 });
+
+Route::get('/db-info', function () {
+    return response()->json([
+        'driver' => config('database.default'),
+        'connections' => config('database.connections'),
+        'env_db' => env('DB_CONNECTION'),
+    ]);
+});
