@@ -6,6 +6,26 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+
+// Put this at the VERY TOP of routes/web.php
+Route::get('/test', function () {
+    return response()->json([
+        'status' => 'ok',
+        'time' => now()->toDateTimeString(),
+        'php' => phpversion(),
+        'laravel' => app()->version()
+    ]);
+});
+
+Route::get('/env-check', function () {
+    return response()->json([
+        'app_key_set' => !empty(config('app.key')),
+        'app_key' => config('app.key') ? substr(config('app.key'), 0, 20) . '...' : 'missing',
+        'app_env' => config('app.env'),
+        'app_debug' => config('app.debug'),
+        'db_connection' => config('database.default'),
+    ]);
+});
 // Your beautiful pages
 Route::get('/', function () {
     return view('home');
