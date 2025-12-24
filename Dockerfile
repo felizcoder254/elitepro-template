@@ -9,10 +9,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Add this after installing dependencies
-RUN php artisan migrate --force --no-interaction \
-    && php artisan db:seed --force --no-interaction
-
 # 2. Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
@@ -51,9 +47,11 @@ RUN rm -f .env && \
     echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=local" >> .env && \
     echo "APP_DEBUG=true" >> .env && \
-    echo "APP_URL=http://localhost" >> .env && \
+    echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env && \
     echo "DB_CONNECTION=sqlite" >> .env && \
-    echo "DB_DATABASE=/var/www/html/database/database.sqlite" >> .env
+    echo "DB_DATABASE=/var/www/html/database/database.sqlite" >> .env && \
+    echo "SESSION_DRIVER=file" >> .env && \
+    echo "CACHE_DRIVER=file" >> .env
 
 # 9. Create SQLite database
 RUN touch database/database.sqlite \
@@ -65,26 +63,19 @@ RUN composer install --no-interaction --no-progress --no-suggest
 # 11. Generate APP_KEY (CRITICAL)
 RUN php artisan key:generate --force
 
-# 12. Run migrations FIRST (creates cache table)
+# 12. Run migrations (NOW it will work - files exist!)
 RUN php artisan migrate --force --no-interaction
 
-# 13. Clear all caches (NOW safe - cache table exists)
+# 13. Clear caches (safe now - migrations ran)
 RUN php artisan config:clear \
     && php artisan route:clear \
-    && php artisan view:clear \
-    && php artisan cache:clear
+    && php artisan view:clear
 
-# 14. OR better: Skip database cache clearing during build
-# Use this instead of line 13 if you still get errors:
-# RUN php artisan config:clear \
-#     && php artisan route:clear \
-#     && php artisan view:clear
-
-# 15. Test if basic Laravel works
+# 14. Create test files
 RUN echo "<?php echo 'PHP is working'; ?>" > /var/www/html/public/test.php
 
-# 16. Expose port
+# 15. Expose port
 EXPOSE 80
 
-# 17. Start Apache
+# 16. Start Apache
 CMD ["apache2-foreground"]
