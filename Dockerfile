@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Add this after installing dependencies
+RUN php artisan migrate --force --no-interaction \
+    && php artisan db:seed --force --no-interaction
+
 # 2. Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
