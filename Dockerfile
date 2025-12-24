@@ -61,20 +61,26 @@ RUN composer install --no-interaction --no-progress --no-suggest
 # 11. Generate APP_KEY (CRITICAL)
 RUN php artisan key:generate --force
 
-# 12. Clear all caches
+# 12. Run migrations FIRST (creates cache table)
+RUN php artisan migrate --force --no-interaction
+
+# 13. Clear all caches (NOW safe - cache table exists)
 RUN php artisan config:clear \
     && php artisan route:clear \
     && php artisan view:clear \
     && php artisan cache:clear
 
-# 13. Run migrations
-RUN php artisan migrate --force --no-interaction
+# 14. OR better: Skip database cache clearing during build
+# Use this instead of line 13 if you still get errors:
+# RUN php artisan config:clear \
+#     && php artisan route:clear \
+#     && php artisan view:clear
 
-# 14. Test if basic Laravel works
+# 15. Test if basic Laravel works
 RUN echo "<?php echo 'PHP is working'; ?>" > /var/www/html/public/test.php
 
-# 15. Expose port
+# 16. Expose port
 EXPOSE 80
 
-# 16. Start Apache
+# 17. Start Apache
 CMD ["apache2-foreground"]
