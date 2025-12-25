@@ -1,5 +1,7 @@
 protected $middleware = [
-    \App\Http\Middleware\TrustProxies::class,  // ← ADD THIS LINE
+    // THIS MUST BE FIRST
+    \App\Http\Middleware\TrustProxies::class,
+    
     \Illuminate\Http\Middleware\HandleCors::class,
     \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
     \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
