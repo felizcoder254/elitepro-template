@@ -27,10 +27,11 @@ class AppServiceProvider extends ServiceProvider
         // Force HTTPS URLs
         URL::forceScheme('https');
         
-        // Force secure cookies
+        // Force secure cookies - ADD SAME_SITE SETTING
         config([
             'session.secure' => true,
             'session.http_only' => true,
+            'session.same_site' => 'none', // ← ADD THIS LINE - CRITICAL!
         ]);
     }
 }
