@@ -103,3 +103,20 @@ Route::get('/db-info', function () {
         'env_db' => env('DB_CONNECTION'),
     ]);
 });
+
+
+Route::get('/check-sessions-table', function () {
+    try {
+        $hasTable = \Illuminate\Support\Facades\Schema::hasTable('sessions');
+        $sessionCount = $hasTable ? \Illuminate\Support\Facades\DB::table('sessions')->count() : 0;
+        
+        return response()->json([
+            'sessions_table_exists' => $hasTable,
+            'session_count' => $sessionCount,
+            'session_driver' => config('session.driver'),
+            'session_connection' => config('session.connection'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
