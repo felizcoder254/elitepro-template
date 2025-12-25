@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
         config([
             'session.secure' => true,
             'session.http_only' => true,
-            'session.same_site' => 'none', // ← ADD THIS LINE - CRITICAL!
+            'session.same_site' => 'lax' // ← ADD THIS LINE - CRITICAL!
         ]);
     }
 }
