@@ -70,3 +70,10 @@ CMD ["/usr/local/bin/deploy.sh"]
 RUN mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
+
+# .env creation section
+RUN echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env \
+    && echo "APP_ENV=production" >> .env \
+    && echo "APP_DEBUG=false" >> .env \
+    && echo "SESSION_SECURE_COOKIE=true" >> .env \
+    && echo "SESSION_SAME_SITE=lax" >> .env
