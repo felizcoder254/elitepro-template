@@ -105,18 +105,22 @@ Route::get('/db-info', function () {
 });
 
 
-Route::get('/check-sessions-table', function () {
-    try {
-        $hasTable = \Illuminate\Support\Facades\Schema::hasTable('sessions');
-        $sessionCount = $hasTable ? \Illuminate\Support\Facades\DB::table('sessions')->count() : 0;
-        
-        return response()->json([
-            'sessions_table_exists' => $hasTable,
-            'session_count' => $sessionCount,
-            'session_driver' => config('session.driver'),
-            'session_connection' => config('session.connection'),
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
+Route::get('/debug-csrf-https', function () {
+    $token = csrf_token();
+    $sessionId = session()->getId();
+    
+    return response()->json([
+        'csrf_token' => $token,
+        'session_id' => $sessionId,
+        'current_url' => url()->current(),
+        'is_secure' => request()->secure(),
+        'session_domain' => config('session.domain'),
+        'session_secure' => config('session.secure'),
+        'session_same_site' => config('session.same_site'),
+        'app_url' => config('app.url'),
+        'form_example' => '<form method="POST" action="' . route('register') . '">
+            <input type="hidden" name="_token" value="' . $token . '">
+            <!-- Your form fields -->
+        </form>',
+    ]);
 });
