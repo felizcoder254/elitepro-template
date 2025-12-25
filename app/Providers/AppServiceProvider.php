@@ -9,16 +9,30 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Detect Render's HTTPS proxy headers
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-            $_SERVER['HTTPS'] = 'on';
-            $_SERVER['SERVER_PORT'] = 443;
-        }
+        // Force HTTPS detection aggressively
+        $_SERVER['HTTPS'] = 'on';
+        $_SERVER['SERVER_PORT'] = 443;
+        
+        // Also set in request
+        $this->app['request']->server->set('HTTPS', 'on');
+        $this->app['request']->server->set('SERVER_PORT', 443);
     }
 
     public function boot(): void
     {
-        // Force HTTPS for all generated URLs
+        // Always HTTPS, no conditions
         URL::forceScheme('https');
+        
+        // Force secure session config
+        config([
+            'session.secure' => true,
+            'session.http_only' => true,
+            'session.same_site' => 'lax',
+        ]);
+        
+        // Also set cookie secure globally
+        if (ini_get('session.cookie_secure') !== '1') {
+            ini_set('session.cookie_secure', '1');
+        }
     }
 }
