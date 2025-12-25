@@ -7,23 +7,22 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        // Force HTTPS detection for Render
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+            $_SERVER['HTTPS'] = 'on';
+            $_SERVER['SERVER_PORT'] = 443;
+        }
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // Force HTTPS in production (for Render deployment)
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
-          URL::forceScheme('https');
+        // Always force HTTPS URLs
+        URL::forceScheme('https');
+        
+        // Ensure secure session cookies
+        config(['session.secure' => true]);
+        config(['session.same_site' => 'lax']);
     }
 }
