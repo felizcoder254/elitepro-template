@@ -65,3 +65,8 @@ RUN chmod +x /usr/local/bin/deploy.sh
 
 # Update CMD
 CMD ["/usr/local/bin/deploy.sh"]
+
+# Add session directory creation
+RUN mkdir -p storage/framework/sessions \
+    && chown -R www-data:www-data storage \
+    && chmod -R 775 storage
