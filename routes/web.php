@@ -249,15 +249,32 @@ Route::get('/simulate-registration', function() {
     ]);
 });
 
-Route::post('/simulate-registration', function() {
-    return response()->json([
-        'success' => request()->has('_token'),
+Route::get('/cookie-test-force', function() {
+    // Force session
+    if (!session()->isStarted()) {
+        session()->start();
+    }
+    
+    session()->put('test_timestamp', now()->toDateTimeString());
+    
+    $response = response()->json([
+        'message' => 'Cookie should be set',
         'session_id' => session()->getId(),
-        'session_data' => session()->all(),
-        'request_token' => request()->input('_token'),
-        'session_token' => session()->get('_token'),
-        'tokens_match' => request()->input('_token') === session()->get('_token'),
-        'has_session_cookie' => request()->hasCookie(config('session.cookie')),
-        'all_cookies' => request()->cookies->all()
+        'check_devtools' => 'Look for laravel_session cookie in Application → Cookies'
     ]);
+    
+    // Manually add cookie as backup
+    $cookie = cookie(
+        'test_manual',
+        'manual_cookie_value',
+        5,
+        '/',
+        '.onrender.com',
+        true,
+        false,
+        false,
+        'none'
+    );
+    
+    return $response->cookie($cookie);
 });
