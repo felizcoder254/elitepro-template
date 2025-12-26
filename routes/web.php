@@ -168,18 +168,16 @@ Route::get('/debug-419', function () {
     ]);
 });
 
-Route::post('/test-post', function () {
-    return response()->json([
-        'success' => true,
-        'message' => 'POST request succeeded',
-        'input' => request()->all(),
-        'csrf_verified' => 'YES (CSRF is disabled)',
+Route::get('/debug-session-cookie', function() {
+    // Start a session
+    session(['test_session_key' => 'test_value']);
+    
+    // Get the response
+    $response = response()->json([
+        'session_id' => session()->getId(),
+        'session_data' => session()->all(),
+        'cookie_in_response' => headers_list() // Check if Set-Cookie header is being sent
     ]);
-});
-
-Route::get('/set-test-cookie', function() {
-    // Try to set a simple cookie
-    $response = response('Test cookie set');
-    $response->cookie('test_cookie', 'hello_world', 2); // 2 minutes
+    
     return $response;
 });
