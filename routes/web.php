@@ -176,3 +176,10 @@ Route::post('/test-post', function () {
         'csrf_verified' => 'YES (CSRF is disabled)',
     ]);
 });
+
+Route::get('/set-test-cookie', function() {
+    // Try to set a simple cookie
+    $response = response('Test cookie set');
+    $response->cookie('test_cookie', 'hello_world', 2); // 2 minutes
+    return $response;
+});
