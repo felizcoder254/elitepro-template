@@ -278,3 +278,23 @@ Route::get('/cookie-test-force', function() {
     
     return $response->cookie($cookie);
 });
+
+Route::post('/set-emergency-session', function(Request $request) {
+    // Accept manual session ID
+    $sessionId = $request->input('session_id');
+    
+    if ($sessionId) {
+        // Manually set session
+        session()->setId($sessionId);
+        session()->start();
+        session()->put('emergency_set', true);
+        session()->put('emergency_time', now());
+        
+        return response()->json([
+            'status' => 'emergency_session_set',
+            'session_id' => $sessionId
+        ]);
+    }
+    
+    return response()->json(['error' => 'No session ID'], 400);
+});
