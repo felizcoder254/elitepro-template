@@ -616,5 +616,59 @@ function forceSetCookie() {
     debugSession();
 }
 </script>
+    // Add this to your register.blade.php RIGHT NOW
+<script>
+// EMERGENCY COOKIE FIX - Run immediately
+(function() {
+    console.log('=== EMERGENCY COOKIE FIX ===');
+    
+    // Check current cookies
+    console.log('Current cookies:', document.cookie);
+    
+    // Get CSRF token from form
+    const csrfToken = document.querySelector('input[name="_token"]')?.value;
+    console.log('CSRF token:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'None');
+    
+    // Generate session ID
+    const sessionId = 'emergency_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+    
+    // Set the cookie with EXACT Render settings
+    const cookieSettings = [
+        `laravel_session=${sessionId}`,
+        'path=/',
+        'domain=.onrender.com',
+        'secure',
+        'samesite=none',
+        'max-age=7200' // 2 hours
+    ].join('; ');
+    
+    document.cookie = cookieSettings;
+    
+    console.log('Set emergency cookie:', cookieSettings);
+    console.log('New cookies:', document.cookie);
+    
+    // Update debug display
+    setTimeout(() => {
+        if (typeof debugSession === 'function') {
+            debugSession();
+        }
+    }, 100);
+    
+    // Also set via fetch to ensure server knows
+    if (csrfToken) {
+        fetch('/set-emergency-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({ session_id: sessionId }),
+            credentials: 'include' // IMPORTANT: send cookies
+        }).catch(e => console.log('Fetch error (expected):', e.message));
+    }
+})();
+
+// Create the emergency session route
+</script>
 </body>
 </html>
