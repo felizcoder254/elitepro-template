@@ -1,7 +1,7 @@
-# ─── Laravel with Apache & PostgreSQL ─────────────────────────────
+# ─── Laravel for Render ───────────────────────────────────────────
 FROM php:8.4-apache
 
-# 1. Install system dependencies
+# 1. Install dependencies
 RUN apt-get update && apt-get install -y \
     git curl libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
     libwebp-dev libxml2-dev libicu-dev libonig-dev libpq-dev \
@@ -25,7 +25,7 @@ RUN a2enmod rewrite \
         -e 's!AllowOverride None!AllowOverride All!g' \
         /etc/apache2/apache2.conf
 
-# 5. Set PHP configuration
+# 5. PHP config
 RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
@@ -34,14 +34,14 @@ RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
 # 6. Set working directory
 WORKDIR /var/www/html
 
-# 7. Copy application files
+# 7. Copy app
 COPY . .
 
 # 8. Fix permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# 9. Create minimal .env (Render will override)
+# 9. Create .env with Render settings
 RUN echo "APP_ENV=production" > .env \
     && echo "APP_DEBUG=false" >> .env \
     && echo "APP_KEY=" >> .env \
@@ -51,29 +51,19 @@ RUN echo "APP_ENV=production" > .env \
     && echo "SESSION_SECURE_COOKIE=true" >> .env \
     && echo "SESSION_SAME_SITE=none" >> .env
 
-# 10. Install Composer dependencies
+# 10. Install dependencies
 RUN composer install --no-interaction --no-progress --optimize-autoloader
 
-# 11. Generate key and setup directories - SIMPLIFIED, NO SESSION:TABLE
+# 11. Setup - NO SESSION:TABLE HERE - FIXED!
 RUN php artisan key:generate --force \
     && mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
 
-# 12. Create .htaccess
-RUN cat > public/.htaccess << 'EOF'
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
-</IfModule>
-EOF
-
-# 13. Create deploy script
+# 12. Create deploy script
 RUN cat > /usr/local/bin/deploy.sh << 'EOF'
 #!/bin/bash
-echo "=== Starting Deployment ==="
+echo "=== Starting Render Deployment ==="
 
 # Clear caches
 php artisan config:clear
@@ -81,22 +71,22 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
-# Run migrations (creates session table)
+# Run migrations (creates session table if needed)
 php artisan migrate --force
 
 # Optimize
 php artisan config:cache
 php artisan route:cache
+php artisan view:cache
 
-# Start Apache
 echo "=== Starting Apache ==="
 exec apache2-foreground
 EOF
 
 RUN chmod +x /usr/local/bin/deploy.sh
 
-# 14. Expose port
+# 13. Expose port
 EXPOSE 80
 
-# 15. Start with deploy script
+# 14. Start with deploy script
 CMD ["/usr/local/bin/deploy.sh"]
