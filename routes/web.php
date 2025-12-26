@@ -218,3 +218,15 @@ Route::get('/debug-middleware', function() {
         'session_id' => session()->getId(),
     ]);
 });
+
+Route::get('/check-error', function() {
+    try {
+        // Test if Kernel loads
+        $kernel = app(\App\Http\Kernel::class);
+        return "Kernel loaded successfully. Web middleware count: " . 
+               count($kernel->getMiddlewareGroups()['web']);
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage() . "\n\nFile: " . $e->getFile() . 
+               "\nLine: " . $e->getLine();
+    }
+});
