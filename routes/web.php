@@ -181,3 +181,12 @@ Route::get('/debug-session-cookie', function() {
     
     return $response;
 });
+
+Route::get('/debug-session-cookie-plain', function() {
+    // Start a session
+    session(['test_session_key' => 'test_value']);
+    
+    // Use a plain response instead of JSON
+    return response('Check cookies in DevTools')
+        ->header('Content-Type', 'text/plain');
+});
