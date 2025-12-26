@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class ForceSessionCookieAlways
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $response = $next($request);
+        
+        // ALWAYS set session cookie, regardless of session state
+        $sessionId = session()->getId();
+        if (!$sessionId) {
+            // Force session start if not started
+            if (!session()->isStarted()) {
+                session()->start();
+                $sessionId = session()->getId();
+            }
+        }
+        
+        if ($sessionId) {
+            // Set cookie with Render-specific settings
+            $cookie = \cookie(
+                'laravel_session',
+                $sessionId,
+                120 * 60, // 2 hours
+                '/',
+                '.onrender.com', // LEADING DOT for all subdomains
+                true,     // secure
+                false,    // httpOnly = FALSE so we can debug
+                false,
+                'none'    // SameSite = none
+            );
+            
+            $response->headers->setCookie($cookie);
+            
+            // Also set a non-httpOnly version for JavaScript
+            $jsCookie = \cookie(
+                'debug_session',
+                $sessionId,
+                5, // 5 minutes for debugging
+                '/',
+                '.onrender.com',
+                true,
+                false, // NOT httpOnly
+                false,
+                'none'
+            );
+            
+            $response->headers->setCookie($jsCookie);
+        }
+        
+        return $response;
+    }
+}
