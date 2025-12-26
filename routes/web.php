@@ -190,3 +190,31 @@ Route::get('/debug-session-cookie-plain', function() {
     return response('Check cookies in DevTools')
         ->header('Content-Type', 'text/plain');
 });
+
+Route::get('/debug-middleware', function() {
+    $router = app('router');
+    
+    // Get current route's middleware
+    $currentRoute = $router->current();
+    $middleware = $currentRoute ? $currentRoute->gatherMiddleware() : [];
+    
+    // Get all middleware in the web group
+    $webMiddleware = app(\App\Http\Kernel::class)->getMiddlewareGroups()['web'] ?? [];
+    
+    // Check session configuration
+    $sessionConfig = [
+        'driver' => config('session.driver'),
+        'cookie' => config('session.cookie'),
+        'domain' => config('session.domain'),
+        'secure' => config('session.secure'),
+        'same_site' => config('session.same_site'),
+    ];
+    
+    return response()->json([
+        'current_route_middleware' => $middleware,
+        'web_middleware_group' => $webMiddleware,
+        'session_config' => $sessionConfig,
+        'session_started' => session()->isStarted(),
+        'session_id' => session()->getId(),
+    ]);
+});
