@@ -230,3 +230,34 @@ Route::get('/check-error', function() {
                "\nLine: " . $e->getLine();
     }
 });
+Route::get('/simulate-registration', function() {
+    // Clear any existing session
+    session()->flush();
+    
+    // Start fresh session
+    session()->start();
+    
+    // Generate CSRF token like a form would
+    $token = csrf_token();
+    
+    // Store in session
+    session()->put('_token', $token);
+    
+    return response()->view('debug-form', [
+        'csrf_token' => $token,
+        'session_id' => session()->getId()
+    ]);
+});
+
+Route::post('/simulate-registration', function() {
+    return response()->json([
+        'success' => request()->has('_token'),
+        'session_id' => session()->getId(),
+        'session_data' => session()->all(),
+        'request_token' => request()->input('_token'),
+        'session_token' => session()->get('_token'),
+        'tokens_match' => request()->input('_token') === session()->get('_token'),
+        'has_session_cookie' => request()->hasCookie(config('session.cookie')),
+        'all_cookies' => request()->cookies->all()
+    ]);
+});
