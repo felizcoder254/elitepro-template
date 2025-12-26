@@ -62,9 +62,9 @@ RUN echo "APP_ENV=production" > .env \
 # 9. Install Composer dependencies
 RUN composer install --no-interaction --no-progress --no-suggest --optimize-autoloader
 
-# 10. Generate APP_KEY and setup sessions (FIXED: handle existing migration)
+# 10. Generate APP_KEY and setup sessions - FIXED WITH ERROR HANDLING
 RUN php artisan key:generate --force \
-    && (php artisan session:table --no-interaction 2>/dev/null || true) \
+    && { php artisan session:table --no-interaction 2>/dev/null || true; } \
     && mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
