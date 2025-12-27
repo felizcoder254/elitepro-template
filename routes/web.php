@@ -353,3 +353,29 @@ Route::get('/read-cookie', function() {
         'all_cookies' => request()->cookies->all(),
     ]);
 });
+Route::get('/session-debug', function() {
+    // Test if session works
+    $count = session('page_visits', 0);
+    $count++;
+    session(['page_visits' => $count]);
+    
+    return response()->json([
+        'session_working' => session('page_visits') === $count,
+        'visits' => $count,
+        'session_id' => session()->getId(),
+        'laravel_session_cookie' => request()->cookie(session()->getName()),
+        'all_cookies' => request()->cookies->all(),
+        'session_config' => [
+            'driver' => config('session.driver'),
+            'secure' => config('session.secure'),
+            'same_site' => config('session.same_site'),
+            'domain' => config('session.domain'),
+        ],
+        'request_info' => [
+            'secure' => request()->secure(),
+            'host' => request()->getHost(),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]
+    ]);
+});
