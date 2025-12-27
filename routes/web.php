@@ -298,3 +298,23 @@ Route::post('/set-emergency-session', function(Request $request) {
     
     return response()->json(['error' => 'No session ID'], 400);
 });
+Route::get('/debug-key', function() {
+    try {
+        $encrypter = App::make('encrypter');
+        return response()->json([
+            'status' => 'success',
+            'app_key_raw' => env('APP_KEY'),
+            'app_key_length' => strlen(env('APP_KEY') ?? ''),
+            'app_key_starts_with_base64' => strpos(env('APP_KEY') ?? '', 'base64:') === 0,
+            'cipher' => config('app.cipher'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'app_key_raw' => env('APP_KEY'),
+            'app_key_length' => strlen(env('APP_KEY') ?? ''),
+            'app_key_preview' => substr(env('APP_KEY') ?? '', 0, 50),
+        ]);
+    }
+});
