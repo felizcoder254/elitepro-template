@@ -318,3 +318,18 @@ Route::get('/debug-key', function() {
         ]);
     }
 });
+
+// In routes/web.php
+Route::get('/session-config', function() {
+    return response()->json([
+        'session_driver' => config('session.driver'),
+        'session_domain' => config('session.domain'),
+        'session_secure' => config('session.secure'),
+        'session_same_site' => config('session.same_site'),
+        'session_path' => config('session.path'),
+        'session_http_only' => config('session.http_only'),
+        'app_url' => config('app.url'),
+        'app_env' => config('app.env'),
+        'cookies_encrypted' => config('session.encrypt'),
+    ]);
+});
