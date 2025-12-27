@@ -34,7 +34,7 @@ RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/custom.ini \
-    && echo "session.save_handler = files" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "session.save_handler = user" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "session.save_path = /var/www/html/storage/framework/sessions" >> /usr/local/etc/php/conf.d/custom.ini
 
 # 6. Set working directory and copy app
@@ -48,7 +48,6 @@ RUN chown -R www-data:www-data /var/www/html \
 # 8. Create Render-optimized .env (Render environment vars will override)
 RUN echo "APP_ENV=production" > .env \
     && echo "APP_DEBUG=false" >> .env \
-    && echo "APP_KEY=" >> .env \
     && echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env \
     && echo "LOG_CHANNEL=stderr" >> .env \
     && echo "SESSION_DRIVER=database" >> .env \
@@ -57,13 +56,15 @@ RUN echo "APP_ENV=production" > .env \
     && echo "SESSION_SAME_SITE=none" >> .env \
     && echo "SESSION_LIFETIME=120" >> .env \
     && echo "TRUSTED_PROXIES=*" >> .env \
-    && echo "TRUSTED_HOSTS=*.onrender.com" >> .env
+    && echo "TRUSTED_HOSTS=*.onrender.com" >> .env \
+    # Don't set APP_KEY here - let artisan generate it
+    && echo "APP_KEY=" >> .env
 
 # 9. Install Composer dependencies
 RUN composer install --no-interaction --no-progress --no-suggest --optimize-autoloader
 
 # 10. Generate APP_KEY and setup sessions
-RUN php artisan key:generate --force \
+RUN php artisan key:generate --force --show \
     && mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
