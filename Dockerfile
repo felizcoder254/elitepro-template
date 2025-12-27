@@ -64,7 +64,6 @@ RUN composer install --no-interaction --no-progress --no-suggest --optimize-auto
 
 # 10. Generate APP_KEY and setup sessions
 RUN php artisan key:generate --force \
-    && php artisan session:table \
     && mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
