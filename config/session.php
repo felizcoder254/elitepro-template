@@ -14,9 +14,12 @@ return [
     'lottery' => [2, 100],
     'cookie' => env('SESSION_COOKIE', Str::slug(env('APP_NAME', 'laravel'), '_').'_session'),
     'path' => env('SESSION_PATH', '/'),
-    'domain' => env('SESSION_DOMAIN', null),
-    'secure' => env('SESSION_SECURE_COOKIE', true),  // FORCE TRUE
+   
+   
     'http_only' => env('SESSION_HTTP_ONLY', true),
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    
     'partitioned' => false,
+    'domain' => env('SESSION_DOMAIN', '.onrender.com'),
+'secure' => env('SESSION_SECURE_COOKIE', true),
+'same_site' => env('SESSION_SAME_SITE', 'lax'),
 ];
