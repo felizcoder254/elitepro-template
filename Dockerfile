@@ -34,7 +34,8 @@ RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/custom.ini \
-    && echo "session.save_handler = user" >> /usr/local/etc/php/conf.d/custom.ini \
+    # Remove or comment out the session.save_handler line
+    # && echo "session.save_handler = user" >> /usr/local/etc/php/conf.d/custom.ini \
     && echo "session.save_path = /var/www/html/storage/framework/sessions" >> /usr/local/etc/php/conf.d/custom.ini
 
 # 6. Set working directory and copy app
@@ -64,7 +65,7 @@ RUN echo "APP_ENV=production" > .env \
 RUN composer install --no-interaction --no-progress --no-suggest --optimize-autoloader
 
 # 10. Generate APP_KEY and setup sessions
-RUN php artisan key:generate --force --show \
+RUN php artisan key:generate --force \
     && mkdir -p storage/framework/sessions \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage
