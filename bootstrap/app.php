@@ -23,3 +23,27 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+Route::get('/force-fix', function() {
+    // Force the correct config
+    config([
+        'session.secure' => false,
+        'session.same_site' => 'none',
+        'session.domain' => '.onrender.com',
+    ]);
+    
+    // Clear session and start fresh
+    session()->flush();
+    
+    // Test
+    session(['force_fix_test' => 'working']);
+    
+    return response()->json([
+        'success' => session('force_fix_test') === 'working',
+        'config' => [
+            'secure' => config('session.secure'),
+            'same_site' => config('session.same_site'),
+            'domain' => config('session.domain'),
+        ],
+        'session_id' => session()->getId(),
+    ])->cookie('test_cookie', 'test_value', 2);
+});
