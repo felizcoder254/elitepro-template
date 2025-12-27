@@ -333,3 +333,23 @@ Route::get('/session-config', function() {
         'cookies_encrypted' => config('session.encrypt'),
     ]);
 });
+Route::get('/test-cookie', function() {
+    // Set a test cookie
+    $response = response()->json(['message' => 'Cookie test']);
+    
+    // Set a simple cookie
+    $response->cookie('test_cookie', 'test_value', 60, '/', '.onrender.com', true, false);
+    
+    // Set Laravel session cookie
+    session(['test_session' => 'session_value']);
+    
+    return $response;
+});
+
+Route::get('/read-cookie', function() {
+    return response()->json([
+        'test_cookie' => request()->cookie('test_cookie'),
+        'session_test' => session('test_session'),
+        'all_cookies' => request()->cookies->all(),
+    ]);
+});
