@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# NUCLEAR: Drop and recreate sessions table
+# Generate the session table migration if it doesn't exist
 php artisan session:table
-php artisan migrate:fresh --force --seed
 
-# Clear everything
+# Run pending migrations
+php artisan migrate --force
+
+# Clear caches
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
