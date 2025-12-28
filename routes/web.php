@@ -420,3 +420,27 @@ Route::post('/test-session-post', function () {
         'request_cookies' => request()->cookie(),
     ]);
 });
+Route::get('/fix-session', function() {
+    // Force session to work
+    config(['session.domain' => '.onrender.com']);
+    config(['session.secure' => true]);
+    
+    // Set a test session
+    session(['test_fixed' => 'working_' . time()]);
+    
+    return response()->json([
+        'message' => 'Session fixed',
+        'session_id' => session()->getId(),
+        'test_value' => session('test_fixed'),
+        'cookie_domain' => config('session.domain')
+    ])->cookie('test_cookie', 'test_value', 60, '/', '.onrender.com', true, false);
+});
+
+Route::get('/check-session', function() {
+    return response()->json([
+        'has_cookie' => request()->hasCookie('laravel_session'),
+        'has_test_cookie' => request()->hasCookie('test_cookie'),
+        'all_cookies' => request()->cookie(),
+        'session_test' => session('test_fixed', 'not_set')
+    ]);
+});
