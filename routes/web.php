@@ -379,3 +379,44 @@ Route::get('/session-debug', function() {
         ]
     ]);
 });
+Route::get('/test-session', function () {
+    // Check if we can store and retrieve a session value
+    $testValue = session('test_key', 'not_set');
+    session(['test_key' => 'test_value']);
+
+    // Check if CSRF token is generated
+    $csrfToken = csrf_token();
+
+    // Get session configuration
+    $sessionConfig = [
+        'driver' => config('session.driver'),
+        'domain' => config('session.domain'),
+        'secure' => config('session.secure'),
+        'same_site' => config('session.same_site'),
+        'lifetime' => config('session.lifetime'),
+        'expire_on_close' => config('session.expire_on_close'),
+    ];
+
+    // Check if session cookie is present in the request
+    $hasSessionCookie = request()->hasCookie(config('session.cookie'));
+
+    return response()->json([
+        'session_config' => $sessionConfig,
+        'csrf_token' => $csrfToken,
+        'session_test' => $testValue,
+        'session_cookie_name' => config('session.cookie'),
+        'has_session_cookie' => $hasSessionCookie,
+        'current_session_id' => session()->getId(),
+        'request_cookies' => request()->cookie(),
+    ]);
+});
+
+Route::post('/test-session-post', function () {
+    // Check if the CSRF token is valid by using the VerifyCsrfToken middleware
+    // We'll just return the session and request data
+    return response()->json([
+        'message' => 'CSRF token is valid',
+        'session_data' => session()->all(),
+        'request_cookies' => request()->cookie(),
+    ]);
+});
