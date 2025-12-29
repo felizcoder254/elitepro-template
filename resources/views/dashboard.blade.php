@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | ElitePro</title>
+    <title>Dashboard | ElitePro - Premium Learning Dashboard</title>
     
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         /* ========== ELITE DASHBOARD DESIGN SYSTEM ========== */
@@ -225,6 +228,7 @@
             transition: all var(--transition-fast);
             position: relative;
             white-space: nowrap;
+            cursor: pointer;
         }
         
         .nav-link:hover {
@@ -291,6 +295,7 @@
             color: white;
             font-weight: 600;
             flex-shrink: 0;
+            cursor: pointer;
         }
         
         .user-info {
@@ -389,6 +394,32 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-tertiary);
+        }
+        
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-top: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .search-suggestion {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+        }
+        
+        .search-suggestion:hover {
+            background: rgba(99, 102, 241, 0.1);
         }
         
         .nav-icon-btn {
@@ -551,6 +582,12 @@
             margin-bottom: 2rem;
         }
         
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         .chart-card {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
@@ -594,6 +631,11 @@
             border-color: var(--primary-500);
         }
         
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
         /* ========== ACTIVITY FEED ========== */
         .activity-card {
             background: var(--card-bg);
@@ -613,6 +655,11 @@
             gap: 1rem;
             padding: 1rem 0;
             border-bottom: 1px solid var(--border-color);
+            transition: transform var(--transition-fast);
+        }
+        
+        .activity-item:hover {
+            transform: translateX(4px);
         }
         
         .activity-item:last-child {
@@ -751,6 +798,7 @@
             height: 100%;
             background: var(--gradient-1);
             border-radius: var(--radius-full);
+            transition: width 1s ease-in-out;
         }
         
         .course-actions {
@@ -869,6 +917,18 @@
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .modal-header {
@@ -915,12 +975,114 @@
             gap: 0.75rem;
         }
         
+        /* ========== NOTIFICATION DROPDOWN ========== */
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 350px;
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-top: 0.5rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .notification-dropdown.active {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .dropdown-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color var(--transition-fast);
+            cursor: pointer;
+        }
+        
+        .notification-item:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .notification-item.unread {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        /* ========== TOAST NOTIFICATIONS ========== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .toast.info {
+            border-left: 4px solid var(--info);
+        }
+        
+        /* ========== LOADING SKELETON ========== */
+        .skeleton {
+            background: linear-gradient(90deg, 
+                var(--bg-tertiary) 0%, 
+                var(--bg-secondary) 50%, 
+                var(--bg-tertiary) 100%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--radius-md);
+        }
+        
+        .skeleton-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            z-index: 9999;
+        }
+        
         /* ========== RESPONSIVE DESIGN ========== */
         @media (max-width: 1200px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .sidebar {
                 width: var(--sidebar-collapsed);
             }
@@ -971,6 +1133,11 @@
             .mobile-menu-toggle {
                 display: flex;
             }
+            
+            .notification-dropdown {
+                width: 300px;
+                right: -50px;
+            }
         }
         
         @media (max-width: 576px) {
@@ -980,6 +1147,11 @@
             
             .nav-search {
                 display: none;
+            }
+            
+            .notification-dropdown {
+                width: calc(100vw - 2rem);
+                right: 1rem;
             }
         }
         
@@ -1043,25 +1215,17 @@
             to { transform: translateX(0); }
         }
         
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out;
         }
         
         .animate-slide-in {
             animation: slideIn 0.3s ease-out;
-        }
-        
-        /* ========== LOADING STATES ========== */
-        .skeleton {
-            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: var(--radius-md);
-        }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
         }
         
         /* ========== SCROLLBAR ========== */
@@ -1085,6 +1249,9 @@
     </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+    
     <!-- Dashboard Container -->
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -1104,19 +1271,19 @@
             <nav class="sidebar-nav">
                 <div class="nav-group">
                     <div class="nav-group-title">Dashboard</div>
-                    <a href="#dashboard" class="nav-link active">
+                    <a href="#" class="nav-link active" data-page="dashboard">
                         <div class="nav-icon">
                             <i class="fas fa-home"></i>
                         </div>
                         <span class="nav-text">Overview</span>
                     </a>
-                    <a href="#analytics" class="nav-link">
+                    <a href="#" class="nav-link" data-page="analytics">
                         <div class="nav-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <span class="nav-text">Analytics</span>
                     </a>
-                    <a href="#performance" class="nav-link">
+                    <a href="#" class="nav-link" data-page="performance">
                         <div class="nav-icon">
                             <i class="fas fa-trophy"></i>
                         </div>
@@ -1127,27 +1294,27 @@
                 
                 <div class="nav-group">
                     <div class="nav-group-title">Learning</div>
-                    <a href="#courses" class="nav-link">
+                    <a href="#" class="nav-link" data-page="courses">
                         <div class="nav-icon">
                             <i class="fas fa-book"></i>
                         </div>
                         <span class="nav-text">My Courses</span>
                         <span class="nav-badge">5</span>
                     </a>
-                    <a href="#certifications" class="nav-link">
+                    <a href="#" class="nav-link" data-page="certifications">
                         <div class="nav-icon">
                             <i class="fas fa-certificate"></i>
                         </div>
                         <span class="nav-text">Certifications</span>
                     </a>
-                    <a href="#practice" class="nav-link">
+                    <a href="#" class="nav-link" data-page="practice">
                         <div class="nav-icon">
                             <i class="fas fa-flask"></i>
                         </div>
                         <span class="nav-text">Practice Tests</span>
                         <span class="nav-badge">12</span>
                     </a>
-                    <a href="#ai-tutor" class="nav-link">
+                    <a href="#" class="nav-link" data-page="ai-tutor">
                         <div class="nav-icon">
                             <i class="fas fa-robot"></i>
                         </div>
@@ -1157,19 +1324,19 @@
                 
                 <div class="nav-group">
                     <div class="nav-group-title">Community</div>
-                    <a href="#study-groups" class="nav-link">
+                    <a href="#" class="nav-link" data-page="study-groups">
                         <div class="nav-icon">
                             <i class="fas fa-users"></i>
                         </div>
                         <span class="nav-text">Study Groups</span>
                     </a>
-                    <a href="#leaderboard" class="nav-link">
+                    <a href="#" class="nav-link" data-page="leaderboard">
                         <div class="nav-icon">
                             <i class="fas fa-crown"></i>
                         </div>
                         <span class="nav-text">Leaderboard</span>
                     </a>
-                    <a href="#mentors" class="nav-link">
+                    <a href="#" class="nav-link" data-page="mentors">
                         <div class="nav-icon">
                             <i class="fas fa-user-graduate"></i>
                         </div>
@@ -1179,19 +1346,19 @@
                 
                 <div class="nav-group">
                     <div class="nav-group-title">Account</div>
-                    <a href="#profile" class="nav-link">
+                    <a href="#" class="nav-link" data-page="profile">
                         <div class="nav-icon">
                             <i class="fas fa-user"></i>
                         </div>
                         <span class="nav-text">Profile</span>
                     </a>
-                    <a href="#settings" class="nav-link">
+                    <a href="#" class="nav-link" data-page="settings">
                         <div class="nav-icon">
                             <i class="fas fa-cog"></i>
                         </div>
                         <span class="nav-text">Settings</span>
                     </a>
-                    <a href="#billing" class="nav-link">
+                    <a href="#" class="nav-link" data-page="billing">
                         <div class="nav-icon">
                             <i class="fas fa-credit-card"></i>
                         </div>
@@ -1202,9 +1369,9 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar">JS</div>
+                    <div class="user-avatar" id="userAvatar">JS</div>
                     <div class="user-info">
-                        <div class="user-name">John Smith</div>
+                        <div class="user-name" id="userName">John Smith</div>
                         <div class="user-role">Premium Member</div>
                     </div>
                     <button class="nav-icon-btn" id="userMenuToggle">
@@ -1223,23 +1390,30 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     
-                    <h1 class="page-title">Dashboard Overview</h1>
+                    <h1 class="page-title" id="pageTitle">Dashboard Overview</h1>
                     
                     <div class="nav-actions">
                         <div class="nav-search">
                             <i class="fas fa-search search-icon"></i>
-                            <input type="text" class="search-input" placeholder="Search courses, topics...">
+                            <input type="text" class="search-input" id="searchInput" placeholder="Search courses, topics...">
+                            <div class="search-suggestions" id="searchSuggestions"></div>
                         </div>
                         
-                        <button class="nav-icon-btn" id="notificationBtn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </button>
-                        
-                        <button class="nav-icon-btn" id="messagesBtn">
-                            <i class="fas fa-envelope"></i>
-                            <span class="notification-badge">5</span>
-                        </button>
+                        <div style="position: relative;">
+                            <button class="nav-icon-btn" id="notificationBtn">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge" id="notificationCount">3</span>
+                            </button>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="dropdown-header">
+                                    <h3 style="font-size: 1rem; margin: 0;">Notifications</h3>
+                                    <button class="btn-text" id="markAllRead" style="font-size: 0.875rem;">Mark all read</button>
+                                </div>
+                                <div class="notification-list" id="notificationList">
+                                    <!-- Notifications loaded via JS -->
+                                </div>
+                            </div>
+                        </div>
                         
                         <button class="theme-toggle" id="themeToggle">
                             <i class="fas fa-moon"></i>
@@ -1249,7 +1423,7 @@
             </nav>
             
             <!-- Dashboard Content -->
-            <div class="dashboard-content">
+            <div class="dashboard-content" id="dashboardContent">
                 <!-- Stats Grid -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -1320,19 +1494,13 @@
                         <div class="chart-header">
                             <div class="chart-title">Study Progress Analytics</div>
                             <div class="chart-period">
-                                <button class="period-btn active">Week</button>
-                                <button class="period-btn">Month</button>
-                                <button class="period-btn">Quarter</button>
+                                <button class="period-btn active" data-period="week">Week</button>
+                                <button class="period-btn" data-period="month">Month</button>
+                                <button class="period-btn" data-period="quarter">Quarter</button>
                             </div>
                         </div>
-                        <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: var(--radius-md);">
-                            <div style="text-align: center;">
-                                <div style="width: 100px; height: 100px; background: var(--gradient-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white;">
-                                    <i class="fas fa-chart-line" style="font-size: 2rem;"></i>
-                                </div>
-                                <p style="color: var(--text-tertiary);">Interactive chart would appear here</p>
-                                <p style="font-size: 0.875rem; color: var(--text-tertiary);">(Chart.js or similar library integration)</p>
-                            </div>
+                        <div class="chart-container">
+                            <canvas id="progressChart"></canvas>
                         </div>
                     </div>
                     
@@ -1340,54 +1508,10 @@
                     <div class="activity-card">
                         <div class="chart-header">
                             <div class="chart-title">Recent Activity</div>
-                            <a href="#" style="font-size: 0.875rem; color: var(--primary-500); font-weight: 500;">View All</a>
+                            <button class="btn-text" id="viewAllActivity">View All</button>
                         </div>
-                        <ul class="activity-list">
-                            <li class="activity-item">
-                                <div class="activity-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Completed AWS Certification Module</div>
-                                    <div class="activity-time">10 minutes ago</div>
-                                </div>
-                            </li>
-                            <li class="activity-item">
-                                <div class="activity-icon started">
-                                    <i class="fas fa-play"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Started Advanced Algorithms Course</div>
-                                    <div class="activity-time">2 hours ago</div>
-                                </div>
-                            </li>
-                            <li class="activity-item">
-                                <div class="activity-icon pending">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Practice Test Scheduled for Tomorrow</div>
-                                    <div class="activity-time">5 hours ago</div>
-                                </div>
-                            </li>
-                            <li class="activity-item">
-                                <div class="activity-icon completed">
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Achieved "Advanced Learner" Badge</div>
-                                    <div class="activity-time">Yesterday</div>
-                                </div>
-                            </li>
-                            <li class="activity-item">
-                                <div class="activity-icon started">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Joined Cloud Computing Study Group</div>
-                                    <div class="activity-time">2 days ago</div>
-                                </div>
-                            </li>
+                        <ul class="activity-list" id="activityList">
+                            <!-- Activity items loaded via JS -->
                         </ul>
                     </div>
                 </div>
@@ -1396,99 +1520,14 @@
                 <div class="mb-4">
                     <div class="flex items-center justify-between mb-4">
                         <h2 style="font-size: 1.5rem; font-weight: 700;">Active Courses</h2>
-                        <a href="#" style="color: var(--primary-500); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <button class="btn-text" id="viewAllCourses">
                             <span>View All Courses</span>
                             <i class="fas fa-arrow-right"></i>
-                        </a>
+                        </button>
                     </div>
                     
-                    <div class="courses-grid">
-                        <!-- Course 1 -->
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-badge">In Progress</div>
-                            </div>
-                            <div class="course-content">
-                                <div class="course-category">Cloud Computing</div>
-                                <h3 class="course-title">AWS Certified Solutions Architect</h3>
-                                <p class="course-description">Master AWS services and design distributed systems on AWS.</p>
-                                
-                                <div class="course-progress">
-                                    <div class="progress-label">
-                                        <span>Progress</span>
-                                        <span>65%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 65%;"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="course-actions">
-                                    <button class="btn btn-primary btn-sm btn-block">
-                                        <i class="fas fa-play"></i>
-                                        Continue Learning
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Course 2 -->
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-badge">Up Next</div>
-                            </div>
-                            <div class="course-content">
-                                <div class="course-category">Data Science</div>
-                                <h3 class="course-title">Machine Learning Fundamentals</h3>
-                                <p class="course-description">Learn core ML concepts and implement algorithms from scratch.</p>
-                                
-                                <div class="course-progress">
-                                    <div class="progress-label">
-                                        <span>Progress</span>
-                                        <span>30%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 30%;"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="course-actions">
-                                    <button class="btn btn-secondary btn-sm btn-block">
-                                        <i class="fas fa-book-open"></i>
-                                        Start Learning
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Course 3 -->
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-badge">Completed</div>
-                            </div>
-                            <div class="course-content">
-                                <div class="course-category">Web Development</div>
-                                <h3 class="course-title">Advanced React & TypeScript</h3>
-                                <p class="course-description">Build scalable React applications with TypeScript best practices.</p>
-                                
-                                <div class="course-progress">
-                                    <div class="progress-label">
-                                        <span>Progress</span>
-                                        <span>100%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 100%;"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="course-actions">
-                                    <button class="btn btn-secondary btn-sm btn-block">
-                                        <i class="fas fa-redo"></i>
-                                        Review Course
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="courses-grid" id="coursesGrid">
+                        <!-- Course cards loaded via JS -->
                     </div>
                 </div>
                 
@@ -1496,49 +1535,15 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <div class="chart-title">Upcoming Practice Tests</div>
-                        <button class="btn btn-primary btn-sm">
+                        <button class="btn btn-primary btn-sm" id="scheduleTestBtn">
                             <i class="fas fa-plus"></i>
                             Schedule New Test
                         </button>
                     </div>
                     
                     <div style="margin-top: 1.5rem;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md);">
-                                <div style="font-weight: 600; margin-bottom: 0.5rem;">AWS Certification</div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>Tomorrow, 10:00 AM</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary);">
-                                    <i class="fas fa-clock"></i>
-                                    <span>120 minutes</span>
-                                </div>
-                            </div>
-                            
-                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md);">
-                                <div style="font-weight: 600; margin-bottom: 0.5rem;">Data Structures</div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>Nov 25, 2:00 PM</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary);">
-                                    <i class="fas fa-clock"></i>
-                                    <span>90 minutes</span>
-                                </div>
-                            </div>
-                            
-                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md);">
-                                <div style="font-weight: 600; margin-bottom: 0.5rem;">System Design</div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>Nov 28, 11:00 AM</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary);">
-                                    <i class="fas fa-clock"></i>
-                                    <span>180 minutes</span>
-                                </div>
-                            </div>
+                        <div class="tests-grid" id="upcomingTests">
+                            <!-- Tests loaded via JS -->
                         </div>
                     </div>
                 </div>
@@ -1557,168 +1562,776 @@
             </div>
             <div class="modal-body">
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <a href="#profile" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: var(--radius-md); background: var(--bg-secondary);">
+                    <button class="modal-menu-item" id="editProfileBtn">
                         <i class="fas fa-user" style="color: var(--primary-500);"></i>
                         <span>Edit Profile</span>
-                    </a>
-                    <a href="#settings" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: var(--radius-md); background: var(--bg-secondary);">
+                    </button>
+                    <button class="modal-menu-item" id="accountSettingsBtn">
                         <i class="fas fa-cog" style="color: var(--primary-500);"></i>
                         <span>Account Settings</span>
-                    </a>
-                    <a href="#billing" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: var(--radius-md); background: var(--bg-secondary);">
+                    </button>
+                    <button class="modal-menu-item" id="billingBtn">
                         <i class="fas fa-credit-card" style="color: var(--primary-500);"></i>
                         <span>Billing & Subscription</span>
-                    </a>
+                    </button>
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                            @csrf
-                            <button type="submit" style="width: 100%; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">
-                                <i class="fas fa-sign-out-alt"></i>
-                                Sign Out
-                            </button>
-                        </form>
+                        <button class="btn btn-danger btn-block" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Sign Out
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- Profile Edit Modal -->
+    <div class="modal" id="profileEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Profile</div>
+                <button class="modal-close" id="closeProfileEdit">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="profileForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
+                        <input type="text" class="search-input" style="width: 100%;" id="profileName" value="John Smith">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+                        <input type="email" class="search-input" style="width: 100%;" id="profileEmail" value="john@example.com">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Avatar Initials</label>
+                        <input type="text" class="search-input" style="width: 100%;" id="profileAvatar" maxlength="2" value="JS">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Study Preferences</label>
+                        <div style="display: flex; gap: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" checked>
+                                <span>Daily Reminders</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" checked>
+                                <span>Weekly Reports</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelProfileEdit">Cancel</button>
+                <button class="btn btn-primary" id="saveProfile">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Test Modal -->
+    <div class="modal" id="scheduleTestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Schedule Practice Test</div>
+                <button class="modal-close" id="closeScheduleTest">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="testForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Test Subject</label>
+                        <select class="search-input" style="width: 100%;" id="testSubject">
+                            <option value="">Select subject</option>
+                            <option value="AWS Certification">AWS Certification</option>
+                            <option value="Data Structures">Data Structures</option>
+                            <option value="System Design">System Design</option>
+                            <option value="Machine Learning">Machine Learning</option>
+                            <option value="Web Development">Web Development</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Date & Time</label>
+                        <input type="datetime-local" class="search-input" style="width: 100%;" id="testDateTime">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Duration (minutes)</label>
+                        <input type="number" class="search-input" style="width: 100%;" id="testDuration" min="30" max="240" value="120">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelScheduleTest">Cancel</button>
+                <button class="btn btn-primary" id="saveTest">Schedule Test</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = themeToggle.querySelector('i');
-        
-        themeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('light');
+        // ========== DATA MANAGEMENT ==========
+        const sampleData = {
+            activities: [
+                { type: 'completed', title: 'Completed AWS Certification Module', time: '10 minutes ago' },
+                { type: 'started', title: 'Started Advanced Algorithms Course', time: '2 hours ago' },
+                { type: 'pending', title: 'Practice Test Scheduled for Tomorrow', time: '5 hours ago' },
+                { type: 'completed', title: 'Achieved "Advanced Learner" Badge', time: 'Yesterday' },
+                { type: 'started', title: 'Joined Cloud Computing Study Group', time: '2 days ago' },
+                { type: 'completed', title: 'Finished React Fundamentals', time: '3 days ago' },
+                { type: 'started', title: 'Started Docker & Kubernetes Course', time: '1 week ago' }
+            ],
+            courses: [
+                { category: 'Cloud Computing', title: 'AWS Certified Solutions Architect', 
+                  description: 'Master AWS services and design distributed systems on AWS.', 
+                  progress: 65, status: 'In Progress' },
+                { category: 'Data Science', title: 'Machine Learning Fundamentals', 
+                  description: 'Learn core ML concepts and implement algorithms from scratch.', 
+                  progress: 30, status: 'Up Next' },
+                { category: 'Web Development', title: 'Advanced React & TypeScript', 
+                  description: 'Build scalable React applications with TypeScript best practices.', 
+                  progress: 100, status: 'Completed' },
+                { category: 'DevOps', title: 'Docker & Kubernetes Mastery', 
+                  description: 'Containerization and orchestration at scale.', 
+                  progress: 45, status: 'In Progress' }
+            ],
+            tests: [
+                { title: 'AWS Certification', date: 'Tomorrow, 10:00 AM', duration: '120 minutes' },
+                { title: 'Data Structures', date: 'Nov 25, 2:00 PM', duration: '90 minutes' },
+                { title: 'System Design', date: 'Nov 28, 11:00 AM', duration: '180 minutes' }
+            ],
+            notifications: [
+                { id: 1, title: 'New course available', message: 'Advanced DevOps course just added', time: '5 min ago', read: false },
+                { id: 2, title: 'Study group invite', message: 'You\'ve been invited to join Cloud Study Group', time: '1 hour ago', read: false },
+                { id: 3, title: 'Progress milestone', message: 'You completed 50% of AWS course', time: '3 hours ago', read: true },
+                { id: 4, title: 'Weekly report', message: 'Your weekly learning report is ready', time: '1 day ago', read: true }
+            ],
+            searchSuggestions: [
+                'AWS Certification',
+                'Machine Learning',
+                'React Development',
+                'Data Structures',
+                'System Design',
+                'DevOps Fundamentals',
+                'Cloud Computing',
+                'TypeScript Advanced'
+            ]
+        };
+
+        // ========== CHART.JS IMPLEMENTATION ==========
+        let progressChart;
+
+        function initializeCharts() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
             
-            if (document.documentElement.classList.contains('light')) {
-                themeIcon.className = 'fas fa-sun';
-                localStorage.setItem('theme', 'light');
-            } else {
-                themeIcon.className = 'fas fa-moon';
-                localStorage.setItem('theme', 'dark');
+            // Destroy existing chart if it exists
+            if (progressChart) {
+                progressChart.destroy();
             }
-        });
-        
-        // Set initial theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        if (savedTheme === 'light') {
-            document.documentElement.classList.add('light');
-            themeIcon.className = 'fas fa-sun';
+            
+            // Chart data
+            const data = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Study Hours',
+                    data: [3, 5, 4, 6, 8, 4, 5],
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            };
+
+            // Chart configuration
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(148, 163, 184, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} hours`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                color: 'var(--text-tertiary)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                color: 'var(--text-tertiary)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animations: {
+                        tension: {
+                            duration: 1000,
+                            easing: 'linear'
+                        }
+                    }
+                }
+            };
+
+            // Create chart
+            progressChart = new Chart(ctx, config);
         }
-        
-        // Sidebar Toggle
-        const sidebar = document.querySelector('.sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebarIcon = sidebarToggle.querySelector('i');
-        
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
+
+        // ========== TOAST NOTIFICATION SYSTEM ==========
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <div style="font-size: 1.25rem;">
+                        ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                            ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            ${message}
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--text-tertiary); cursor: pointer;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
             
-            if (sidebar.classList.contains('collapsed')) {
-                sidebarIcon.className = 'fas fa-chevron-right';
-            } else {
-                sidebarIcon.className = 'fas fa-chevron-left';
-            }
-        });
-        
-        // Mobile Menu Toggle
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // ========== DATA RENDERING FUNCTIONS ==========
+        function renderActivities() {
+            const activityList = document.getElementById('activityList');
+            activityList.innerHTML = '';
+            
+            sampleData.activities.slice(0, 5).forEach(activity => {
+                const li = document.createElement('li');
+                li.className = 'activity-item';
+                li.innerHTML = `
+                    <div class="activity-icon ${activity.type}">
+                        <i class="fas ${
+                            activity.type === 'completed' ? 'fa-check' :
+                            activity.type === 'started' ? 'fa-play' : 'fa-clock'
+                        }"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                `;
+                activityList.appendChild(li);
             });
         }
-        
-        // User Menu Modal
-        const userMenuToggle = document.getElementById('userMenuToggle');
-        const userMenuModal = document.getElementById('userMenuModal');
-        const closeUserMenu = document.getElementById('closeUserMenu');
-        
-        userMenuToggle.addEventListener('click', () => {
-            userMenuModal.classList.add('active');
-        });
-        
-        closeUserMenu.addEventListener('click', () => {
-            userMenuModal.classList.remove('active');
-        });
-        
-        // Close modal when clicking outside
-        userMenuModal.addEventListener('click', (e) => {
-            if (e.target === userMenuModal) {
-                userMenuModal.classList.remove('active');
-            }
-        });
-        
-        // Active navigation highlighting
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                navLinks.forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
+
+        function renderCourses() {
+            const coursesGrid = document.getElementById('coursesGrid');
+            coursesGrid.innerHTML = '';
+            
+            sampleData.courses.forEach(course => {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <div class="course-image">
+                        <div class="course-badge">${course.status}</div>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-category">${course.category}</div>
+                        <h3 class="course-title">${course.title}</h3>
+                        <p class="course-description">${course.description}</p>
+                        
+                        <div class="course-progress">
+                            <div class="progress-label">
+                                <span>Progress</span>
+                                <span>${course.progress}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${course.progress}%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="course-actions">
+                            <button class="btn ${
+                                course.status === 'In Progress' ? 'btn-primary' : 'btn-secondary'
+                            } btn-sm btn-block" data-course="${course.title}">
+                                <i class="fas ${
+                                    course.status === 'In Progress' ? 'fa-play' :
+                                    course.status === 'Up Next' ? 'fa-book-open' : 'fa-redo'
+                                }"></i>
+                                ${
+                                    course.status === 'In Progress' ? 'Continue Learning' :
+                                    course.status === 'Up Next' ? 'Start Learning' : 'Review Course'
+                                }
+                            </button>
+                        </div>
+                    </div>
+                `;
+                coursesGrid.appendChild(card);
+            });
+        }
+
+        function renderTests() {
+            const testsGrid = document.getElementById('upcomingTests');
+            testsGrid.innerHTML = '';
+            
+            sampleData.tests.forEach(test => {
+                const testDiv = document.createElement('div');
+                testDiv.style.cssText = 'background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md);';
+                testDiv.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">${test.title}</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
+                        <i class="fas fa-calendar"></i>
+                        <span>${test.date}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-tertiary);">
+                        <i class="fas fa-clock"></i>
+                        <span>${test.duration}</span>
+                    </div>
+                `;
+                testsGrid.appendChild(testDiv);
+            });
+        }
+
+        function renderNotifications() {
+            const notificationList = document.getElementById('notificationList');
+            const notificationCount = document.getElementById('notificationCount');
+            
+            notificationList.innerHTML = '';
+            
+            const unreadCount = sampleData.notifications.filter(n => !n.read).length;
+            notificationCount.textContent = unreadCount;
+            
+            sampleData.notifications.forEach(notification => {
+                const item = document.createElement('div');
+                item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                item.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${notification.title}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                        ${notification.message}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                        ${notification.time}
+                    </div>
+                `;
+                item.addEventListener('click', () => {
+                    notification.read = true;
+                    renderNotifications();
+                    showToast('Notification marked as read', 'success');
+                });
+                notificationList.appendChild(item);
+            });
+        }
+
+        // ========== SEARCH FUNCTIONALITY ==========
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchSuggestions = document.getElementById('searchSuggestions');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
                 
-                // Update page title based on selected nav
-                const pageTitle = document.querySelector('.page-title');
-                const navText = this.querySelector('.nav-text').textContent;
-                pageTitle.textContent = navText;
-            });
-        });
-        
-        // Search functionality
-        const searchInput = document.querySelector('.search-input');
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                alert(`Searching for: ${searchInput.value}`);
-                searchInput.value = '';
-            }
-        });
-        
-        // Notification button
-        const notificationBtn = document.getElementById('notificationBtn');
-        notificationBtn.addEventListener('click', () => {
-            alert('Notifications panel would open here');
-        });
-        
-        // Messages button
-        const messagesBtn = document.getElementById('messagesBtn');
-        messagesBtn.addEventListener('click', () => {
-            alert('Messages panel would open here');
-        });
-        
-        // Course card buttons
-        document.querySelectorAll('.btn-primary, .btn-secondary').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                if (this.closest('.course-actions')) {
-                    e.preventDefault();
-                    const courseTitle = this.closest('.course-card').querySelector('.course-title').textContent;
-                    alert(`Starting: ${courseTitle}`);
+                if (query.length === 0) {
+                    searchSuggestions.style.display = 'none';
+                    return;
+                }
+                
+                const filtered = sampleData.searchSuggestions.filter(item => 
+                    item.toLowerCase().includes(query)
+                );
+                
+                if (filtered.length > 0) {
+                    searchSuggestions.innerHTML = filtered.map(item => 
+                        `<div class="search-suggestion">${item}</div>`
+                    ).join('');
+                    searchSuggestions.style.display = 'block';
+                    
+                    // Add click handlers to suggestions
+                    searchSuggestions.querySelectorAll('.search-suggestion').forEach(suggestion => {
+                        suggestion.addEventListener('click', function() {
+                            searchInput.value = this.textContent;
+                            searchSuggestions.style.display = 'none';
+                            showToast(`Searching for "${this.textContent}"`, 'info');
+                        });
+                    });
+                } else {
+                    searchSuggestions.style.display = 'none';
                 }
             });
-        });
-        
-        // Period buttons
-        document.querySelectorAll('.period-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                alert(`Viewing data for: ${this.textContent}`);
+            
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchSuggestions.style.display = 'none';
+                    if (this.value.trim()) {
+                        showToast(`Searching for "${this.value}"`, 'info');
+                    }
+                }
             });
-        });
-        
-        // Initialize animations
-        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+                    searchSuggestions.style.display = 'none';
+                }
+            });
+        }
+
+        // ========== EVENT HANDLERS ==========
+        function setupEventHandlers() {
+            // Theme Toggle
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = themeToggle.querySelector('i');
+            
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('light');
+                
+                if (document.documentElement.classList.contains('light')) {
+                    themeIcon.className = 'fas fa-sun';
+                    localStorage.setItem('theme', 'light');
+                    showToast('Light theme activated', 'success');
+                } else {
+                    themeIcon.className = 'fas fa-moon';
+                    localStorage.setItem('theme', 'dark');
+                    showToast('Dark theme activated', 'success');
+                }
+            });
+            
+            // Set initial theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.classList.add('light');
+                themeIcon.className = 'fas fa-sun';
+            }
+            
+            // Sidebar Toggle
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarIcon = sidebarToggle.querySelector('i');
+            
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    sidebarIcon.className = 'fas fa-chevron-right';
+                    showToast('Sidebar collapsed', 'info');
+                } else {
+                    sidebarIcon.className = 'fas fa-chevron-left';
+                    showToast('Sidebar expanded', 'info');
+                }
+            });
+            
+            // Mobile Menu Toggle
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+            
+            // Navigation Links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update page title
+                    const pageTitle = document.getElementById('pageTitle');
+                    const navText = this.querySelector('.nav-text').textContent;
+                    pageTitle.textContent = navText;
+                    
+                    // Show notification for page change
+                    showToast(`Navigated to ${navText}`, 'info');
+                    
+                    // Close mobile sidebar if open
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Notification Dropdown
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            notificationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('active');
+            });
+            
+            // Mark all as read
+            document.getElementById('markAllRead').addEventListener('click', (e) => {
+                e.stopPropagation();
+                sampleData.notifications.forEach(n => n.read = true);
+                renderNotifications();
+                showToast('All notifications marked as read', 'success');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                notificationDropdown.classList.remove('active');
+            });
+            
+            // User Menu Modal
+            const userMenuToggle = document.getElementById('userMenuToggle');
+            const userMenuModal = document.getElementById('userMenuModal');
+            const closeUserMenu = document.getElementById('closeUserMenu');
+            
+            userMenuToggle.addEventListener('click', () => {
+                userMenuModal.classList.add('active');
+            });
+            
+            closeUserMenu.addEventListener('click', () => {
+                userMenuModal.classList.remove('active');
+            });
+            
+            // Profile Edit
+            document.getElementById('editProfileBtn').addEventListener('click', () => {
+                userMenuModal.classList.remove('active');
+                document.getElementById('profileEditModal').classList.add('active');
+            });
+            
+            // Close profile modal
+            document.getElementById('closeProfileEdit').addEventListener('click', () => {
+                document.getElementById('profileEditModal').classList.remove('active');
+            });
+            
+            document.getElementById('cancelProfileEdit').addEventListener('click', () => {
+                document.getElementById('profileEditModal').classList.remove('active');
+            });
+            
+            // Save profile
+            document.getElementById('saveProfile').addEventListener('click', () => {
+                const name = document.getElementById('profileName').value;
+                const avatar = document.getElementById('profileAvatar').value;
+                
+                document.getElementById('userName').textContent = name;
+                document.getElementById('userAvatar').textContent = avatar;
+                
+                document.getElementById('profileEditModal').classList.remove('active');
+                showToast('Profile updated successfully', 'success');
+            });
+            
+            // Schedule Test
+            document.getElementById('scheduleTestBtn').addEventListener('click', () => {
+                document.getElementById('scheduleTestModal').classList.add('active');
+            });
+            
+            // Close schedule modal
+            document.getElementById('closeScheduleTest').addEventListener('click', () => {
+                document.getElementById('scheduleTestModal').classList.remove('active');
+            });
+            
+            document.getElementById('cancelScheduleTest').addEventListener('click', () => {
+                document.getElementById('scheduleTestModal').classList.remove('active');
+            });
+            
+            // Save test
+            document.getElementById('saveTest').addEventListener('click', () => {
+                const subject = document.getElementById('testSubject').value;
+                const dateTime = document.getElementById('testDateTime').value;
+                const duration = document.getElementById('testDuration').value;
+                
+                if (!subject || !dateTime) {
+                    showToast('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                const date = new Date(dateTime);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Add to sample data
+                sampleData.tests.unshift({
+                    title: subject,
+                    date: formattedDate,
+                    duration: `${duration} minutes`
+                });
+                
+                renderTests();
+                document.getElementById('scheduleTestModal').classList.remove('active');
+                showToast('Test scheduled successfully', 'success');
+                
+                // Reset form
+                document.getElementById('testForm').reset();
+            });
+            
+            // View all buttons
+            document.getElementById('viewAllActivity').addEventListener('click', () => {
+                showToast('Showing all activities', 'info');
+            });
+            
+            document.getElementById('viewAllCourses').addEventListener('click', () => {
+                showToast('Showing all courses', 'info');
+            });
+            
+            // Period buttons
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const period = this.dataset.period;
+                    showToast(`Viewing ${period} data`, 'info');
+                    
+                    // Update chart data based on period
+                    // This would normally fetch new data from an API
+                });
+            });
+            
+            // Course card buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.course-actions .btn')) {
+                    const btn = e.target.closest('.btn');
+                    const courseTitle = btn.closest('.course-card').querySelector('.course-title').textContent;
+                    
+                    if (btn.classList.contains('btn-primary')) {
+                        showToast(`Continuing "${courseTitle}"`, 'success');
+                    } else {
+                        showToast(`Starting "${courseTitle}"`, 'success');
+                    }
+                }
+            });
+            
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to sign out?')) {
+                    showToast('Signed out successfully', 'success');
+                    setTimeout(() => {
+                        alert('Redirecting to login page...');
+                        // In a real app, this would redirect to login
+                    }, 1000);
+                }
+            });
+            
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl + K for search
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    document.getElementById('searchInput').focus();
+                }
+                
+                // Escape to close modals
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.active').forEach(modal => {
+                        modal.classList.remove('active');
+                    });
+                    notificationDropdown.classList.remove('active');
+                }
+                
+                // T for theme toggle
+                if (e.key === 't' && e.altKey) {
+                    e.preventDefault();
+                    themeToggle.click();
+                }
+                
+                // M for menu toggle
+                if (e.key === 'm' && e.altKey) {
+                    e.preventDefault();
+                    sidebarToggle.click();
+                }
+            });
+        }
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all components
+            initializeCharts();
+            renderActivities();
+            renderCourses();
+            renderTests();
+            renderNotifications();
+            setupSearch();
+            setupEventHandlers();
+            
             // Add fade-in animations
             document.querySelectorAll('.stat-card, .chart-card, .course-card').forEach((el, index) => {
                 el.style.animationDelay = `${index * 0.1}s`;
                 el.classList.add('animate-fade-in');
             });
+            
+            // Show welcome toast
+            setTimeout(() => {
+                showToast('Welcome to ElitePro Dashboard!', 'success');
+            }, 1000);
+            
+            // Simulate data loading
+            setTimeout(() => {
+                console.log('Dashboard data loaded successfully');
+            }, 500);
         });
-        
-        // Simulate loading data
-        setTimeout(() => {
-            console.log('Dashboard data loaded successfully');
-        }, 1000);
+
+        // ========== WINDOW RESIZE HANDLER ==========
+        window.addEventListener('resize', function() {
+            // Reinitialize charts on resize
+            if (progressChart) {
+                progressChart.resize();
+            }
+            
+            // Auto-collapse sidebar on small screens
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('collapsed');
+            }
+        });
     </script>
 </body>
 </html>
