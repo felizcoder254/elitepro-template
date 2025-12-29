@@ -25,12 +25,27 @@
         "pestphp/pest": "^4.2",
         "pestphp/pest-plugin-laravel": "^4.0"
     },
+
+    "scripts": {
+    "post-autoload-dump": [
+        "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+        "@php artisan package:discover --ansi"
+    ],
+    "post-install-cmd": [
+        "@php artisan storage:link",
+        "chmod -R 775 storage bootstrap/cache"
+    ],
+    "post-update-cmd": [
+        "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ]
+},
     "autoload": {
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
+    
     },
     "autoload-dev": {
         "psr-4": {
