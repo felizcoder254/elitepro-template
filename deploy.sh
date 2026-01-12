@@ -6,22 +6,36 @@ echo "=== Starting Laravel Deployment on Render ==="
 # 1. Change to app directory
 cd /var/www/html
 
-# 2. Create necessary directories
+# 2. Create a lock file to prevent running twice
+LOCKFILE="/tmp/deploy.lock"
+if [ -f "$LOCKFILE" ]; then
+    echo "Deployment already in progress. Exiting."
+    exit 0
+fi
+touch "$LOCKFILE"
+trap "rm -f $LOCKFILE" EXIT
+
+# 3. Create necessary directories
 echo "Creating directories..."
 mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p storage/logs
 chmod -R 775 storage bootstrap/cache
 
-# 3. Check if APP_KEY exists, generate if not
-if ! grep -q "^APP_KEY=base64:" .env; then
-    echo "APP_KEY not found. Generating..."
-    php artisan key:generate --force
-    echo "✅ APP_KEY generated"
-else
+# 4. Generate APP_KEY if not exists (force generate)
+echo "Generating APP_KEY..."
+if grep -q "^APP_KEY=base64:" .env; then
     echo "✅ APP_KEY already exists"
+else
+    # Create a temporary .env with APP_KEY placeholder
+    if ! grep -q "^APP_KEY=" .env; then
+        echo "APP_KEY=" >> .env
+    fi
+    # Generate the key
+    php artisan key:generate --force --no-interaction 2>/dev/null || true
+    echo "✅ APP_KEY generated"
 fi
 
-# 4. Wait for PostgreSQL to be ready
+# 5. Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL connection..."
 max_attempts=30
 attempt=1
@@ -57,46 +71,65 @@ if [ $attempt -gt $max_attempts ]; then
     exit 1
 fi
 
-# 5. Run database migrations (only if needed)
+# 6. Run database migrations
 echo "Running database migrations..."
-if php artisan migrate:status | grep -q "No"; then
-    php artisan migrate --force
-    echo "✅ Migrations completed"
-else
-    echo "✅ Migrations already up to date"
-fi
+php artisan migrate --force --no-interaction
 
-# 6. Create sessions table if it doesn't exist
+# 7. Create sessions table (run session:table and migrate if needed)
 echo "Setting up sessions..."
-if ! php artisan migrate:status | grep -q "create_sessions_table"; then
-    php artisan session:table
-    php artisan migrate --force
+# Check if sessions migration exists in migrations table
+if php -r "
+require 'vendor/autoload.php';
+\$app = require_once 'bootstrap/app.php';
+\$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+if (!Schema::hasTable('migrations')) {
+    echo 'no_migrations_table';
+    exit(0);
+}
+
+\$migration = DB::table('migrations')->where('migration', 'like', '%create_sessions_table%')->first();
+echo \$migration ? 'exists' : 'not_exists';
+" | grep -q "not_exists" || grep -q "no_migrations_table"; then
+    echo "Creating sessions table..."
+    php artisan session:table --no-interaction
+    php artisan migrate --force --no-interaction
     echo "✅ Sessions table created"
 else
     echo "✅ Sessions table already exists"
 fi
 
-# 7. Clear caches
+# 8. Clear caches
 echo "Clearing caches..."
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
 
-# 8. Link storage
-php artisan storage:link
+# 9. Link storage
+php artisan storage:link --no-interaction
 
-# 9. Set proper ownership
+# 10. Set proper ownership
 chown -R www-data:www-data storage bootstrap/cache
+
+# 11. Optimize for production
+if [ "$APP_ENV" = "production" ]; then
+    echo "Optimizing for production..."
+    php artisan config:cache --no-interaction
+    php artisan route:cache --no-interaction
+    php artisan view:cache --no-interaction
+fi
 
 echo "✅ Laravel setup complete!"
 
-# 10. Debug output
+# 12. Debug output
 echo "=== Final Configuration ==="
-echo "APP_KEY: $(grep '^APP_KEY=' .env | head -1)"
-echo "APP_URL: $(grep '^APP_URL=' .env | head -1)"
-echo "DB_CONNECTION: $(grep '^DB_CONNECTION=' .env | head -1)"
+echo "APP_ENV: ${APP_ENV}"
+echo "APP_DEBUG: ${APP_DEBUG}"
+echo "DB_CONNECTION: ${DB_CONNECTION}"
 
-# 11. Start Apache in foreground
+# 13. Start Apache in foreground
 echo "=== Starting Apache web server ==="
 exec apache2-foreground
