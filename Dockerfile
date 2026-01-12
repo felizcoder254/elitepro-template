@@ -9,11 +9,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Configure and install PHP extensions
+# 2. Configure and install PHP extensions (SIMPLIFIED - remove intl if causing issues)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo pdo_mysql pdo_pgsql \
-        zip gd bcmath mbstring exif pcntl xml intl
+        zip gd bcmath mbstring exif pcntl xml
+        # Removed: intl (causing long build times)
 
 # 3. Install Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
@@ -37,33 +38,24 @@ RUN echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/custom.ini \
 WORKDIR /var/www/html
 COPY . .
 
-# 7. Install Composer dependencies (NO .env needed for this)
+# 7. Install Composer dependencies
 RUN composer install --no-interaction --no-progress --no-suggest --optimize-autoloader
 
 # 8. Fix permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# 9. Create default .env from .env.example with Render settings
-RUN if [ -f .env.example ]; then \
-    cp .env.example .env && \
-    sed -i "s|APP_URL=http://localhost|APP_URL=https://elitepro-template-1.onrender.com|g" .env && \
-    sed -i "s|APP_DEBUG=true|APP_DEBUG=false|g" .env && \
-    sed -i "s|SESSION_DRIVER=file|SESSION_DRIVER=database|g" .env && \
-    sed -i "s|DB_CONNECTION=mysql|DB_CONNECTION=pgsql|g" .env && \
-    sed -i "s|# SESSION_DOMAIN=|SESSION_DOMAIN=.onrender.com|g" .env && \
-    sed -i "s|SESSION_SECURE_COOKIE=false|SESSION_SECURE_COOKIE=true|g" .env && \
-    sed -i "s|SESSION_SAME_SITE=lax|SESSION_SAME_SITE=none|g" .env; \
-    else \
-    echo "APP_ENV=production" > .env && \
-    echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env && \
-    echo "SESSION_DRIVER=database" >> .env && \
-    echo "SESSION_DOMAIN=.onrender.com" >> .env && \
-    echo "SESSION_SECURE_COOKIE=true" >> .env && \
-    echo "SESSION_SAME_SITE=none" >> .env && \
-    echo "DB_CONNECTION=pgsql" >> .env; \
-    fi
+# 9. Create minimal .env file (Render will override with real values)
+RUN echo "APP_NAME=Laravel" > .env \
+    && echo "APP_ENV=production" >> .env \
+    && echo "APP_DEBUG=false" >> .env \
+    && echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env \
+    && echo "LOG_CHANNEL=stderr" >> .env \
+    && echo "DB_CONNECTION=pgsql" >> .env \
+    && echo "SESSION_DRIVER=database" >> .env \
+    && echo "SESSION_DOMAIN=.onrender.com" >> .env \
+    && echo "SESSION_SECURE_COOKIE=true" >> .env \
+    && echo "SESSION_SAME_SITE=none" >> .env
 
 # 10. Create .htaccess for Apache
 RUN cat > public/.htaccess << 'EOF'
@@ -88,13 +80,6 @@ RUN cat > public/.htaccess << 'EOF'
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
-
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-</IfModule>
 EOF
 
 # 11. Copy deploy script
@@ -104,9 +89,5 @@ RUN chmod +x /usr/local/bin/deploy.sh
 # 12. Expose port
 EXPOSE 80
 
-# 13. Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
-
-# 14. Start with deploy script
+# 13. Start with deploy script
 CMD ["/usr/local/bin/deploy.sh"]
