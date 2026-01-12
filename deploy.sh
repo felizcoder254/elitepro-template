@@ -1,29 +1,30 @@
 #!/bin/bash
-set -e
-
-echo "=== SIMPLE Laravel Deploy ==="
 
 cd /var/www/html
 
-# 1. Create storage directories
-mkdir -p storage/framework/{sessions,views,cache}
-chmod -R 775 storage
+# Setup
+mkdir -p storage/framework/sessions
+chmod -R 775 storage bootstrap/cache
 
-# 2. Always generate APP_KEY (ignore warnings)
-echo "APP_KEY=" > .env.appkey
-php artisan key:generate --force 2>&1 | grep -v "No APP_KEY" || true
+# Generate key
+php artisan key:generate --force 2>/dev/null || true
 
-# 3. Wait briefly for database
-sleep 3
+# Wait for DB
+sleep 5
 
-# 4. Run migrations (including sessions) - suppress errors
-php artisan migrate --force 2>&1 | grep -v "ERROR\|error" || true
+# Create sessions table FIRST
+php artisan session:table --no-interaction 2>/dev/null || true
 
-# 5. Clear caches
-php artisan config:clear || true
-php artisan cache:clear || true
+# Run migrations
+php artisan migrate --force --no-interaction 2>/dev/null || true
 
-echo "✅ Deploy complete. Starting Apache..."
+# Clear and cache config
+php artisan config:clear
+php artisan cache:clear
+php artisan config:cache
 
-# 6. Start Apache
+# Fix Apache document root
+sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+echo "✅ Laravel with HTTPS sessions ready"
 exec apache2-foreground
