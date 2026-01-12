@@ -12,13 +12,16 @@ mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p storage/logs
 chmod -R 775 storage bootstrap/cache
 
-# 3. Generate application key if not set
-if ! grep -q "APP_KEY=base64:" .env; then
-    echo "Generating application key..."
+# 3. Check if APP_KEY exists, generate if not
+if ! grep -q "^APP_KEY=base64:" .env; then
+    echo "APP_KEY not found. Generating..."
     php artisan key:generate --force
+    echo "✅ APP_KEY generated"
+else
+    echo "✅ APP_KEY already exists"
 fi
 
-# 4. Wait for PostgreSQL to be ready (CRITICAL FOR RENDER)
+# 4. Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL connection..."
 max_attempts=30
 attempt=1
@@ -35,13 +38,11 @@ while [ $attempt -le $max_attempts ]; do
         \$dsn = 'pgsql:host=' . \$host . ';port=' . \$port . ';dbname=' . \$dbname;
         \$db = new PDO(\$dsn, \$username, \$password);
         \$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo 'PostgreSQL connected successfully';
         exit(0);
     } catch (PDOException \$e) {
-        echo 'Connection failed: ' . \$e->getMessage();
         exit(1);
     }
-    "; then
+    " 2>/dev/null; then
         echo "✅ PostgreSQL is ready!"
         break
     else
@@ -53,22 +54,27 @@ done
 
 if [ $attempt -gt $max_attempts ]; then
     echo "❌ PostgreSQL connection failed after $max_attempts attempts"
-    echo "Debug info:"
-    echo "DB_HOST: ${DB_HOST}"
-    echo "DB_PORT: ${DB_PORT}"
-    echo "DB_DATABASE: ${DB_DATABASE}"
-    echo "DB_USERNAME: ${DB_USERNAME}"
     exit 1
 fi
 
-# 5. Run database migrations
+# 5. Run database migrations (only if needed)
 echo "Running database migrations..."
-php artisan migrate --force
+if php artisan migrate:status | grep -q "No"; then
+    php artisan migrate --force
+    echo "✅ Migrations completed"
+else
+    echo "✅ Migrations already up to date"
+fi
 
-# 6. Create sessions table
+# 6. Create sessions table if it doesn't exist
 echo "Setting up sessions..."
-php artisan session:table
-php artisan migrate --force
+if ! php artisan migrate:status | grep -q "create_sessions_table"; then
+    php artisan session:table
+    php artisan migrate --force
+    echo "✅ Sessions table created"
+else
+    echo "✅ Sessions table already exists"
+fi
 
 # 7. Clear caches
 echo "Clearing caches..."
@@ -80,27 +86,17 @@ php artisan route:clear
 # 8. Link storage
 php artisan storage:link
 
-# 9. Set production optimizations
-if [ "$APP_ENV" = "production" ] || [ "$APP_ENV" = "Production" ]; then
-    echo "Optimizing for production..."
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
-fi
-
-# 10. Set proper ownership
+# 9. Set proper ownership
 chown -R www-data:www-data storage bootstrap/cache
 
 echo "✅ Laravel setup complete!"
 
-# 11. Debug output
-echo "=== Debug Information ==="
-echo "APP_ENV: ${APP_ENV}"
-echo "APP_URL: ${APP_URL}"
-echo "DB_CONNECTION: ${DB_CONNECTION}"
-echo "DB_HOST: ${DB_HOST}"
-echo "Session Driver: $(php artisan tinker --execute='echo config(\"session.driver\");')"
+# 10. Debug output
+echo "=== Final Configuration ==="
+echo "APP_KEY: $(grep '^APP_KEY=' .env | head -1)"
+echo "APP_URL: $(grep '^APP_URL=' .env | head -1)"
+echo "DB_CONNECTION: $(grep '^DB_CONNECTION=' .env | head -1)"
 
-# 12. Start Apache in foreground
+# 11. Start Apache in foreground
 echo "=== Starting Apache web server ==="
 exec apache2-foreground
