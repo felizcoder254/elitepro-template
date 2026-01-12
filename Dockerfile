@@ -9,22 +9,25 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Configure and install PHP extensions (SIMPLIFIED - remove intl if causing issues)
+# 2. Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo pdo_mysql pdo_pgsql \
         zip gd bcmath mbstring exif pcntl xml
-        # Removed: intl (causing long build times)
 
 # 3. Install Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# 4. Configure Apache for Render
+# 4. Configure Apache for Laravel (FIXED)
 RUN a2enmod rewrite headers \
-    && sed -ri \
-        -e 's!/var/www/html!/var/www/html/public!g' \
-        -e 's!AllowOverride None!AllowOverride All!g' \
-        /etc/apache2/apache2.conf \
+    && echo "<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+        Options Indexes FollowSymLinks\n\
+    </Directory>\n\
+</VirtualHost>" > /etc/apache2/sites-available/000-default.conf \
     && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # 5. Set PHP configuration for Render
@@ -45,17 +48,14 @@ RUN composer install --no-interaction --no-progress --no-suggest --optimize-auto
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# 9. Create minimal .env file (Render will override with real values)
+# 9. Create minimal .env file
 RUN echo "APP_NAME=Laravel" > .env \
     && echo "APP_ENV=production" >> .env \
     && echo "APP_DEBUG=false" >> .env \
     && echo "APP_URL=https://elitepro-template-1.onrender.com" >> .env \
     && echo "LOG_CHANNEL=stderr" >> .env \
     && echo "DB_CONNECTION=pgsql" >> .env \
-    && echo "SESSION_DRIVER=database" >> .env \
-    && echo "SESSION_DOMAIN=.onrender.com" >> .env \
-    && echo "SESSION_SECURE_COOKIE=true" >> .env \
-    && echo "SESSION_SAME_SITE=none" >> .env
+    && echo "SESSION_DRIVER=database" >> .env
 
 # 10. Create .htaccess for Apache
 RUN cat > public/.htaccess << 'EOF'
