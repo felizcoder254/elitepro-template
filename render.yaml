@@ -1,12 +1,15 @@
 services:
   - type: web
     name: elitepro-template
-    env: docker
     dockerfilePath: ./Dockerfile
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
-      - key: APP_KEY
-        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: SESSION_DRIVER
+        value: file  # CHANGE TO FILE TO AVOID SESSIONS TABLE ISSUE
+      - key: SESSION_DOMAIN
+        value: .onrender.com
