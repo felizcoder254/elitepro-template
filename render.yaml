@@ -2,9 +2,8 @@ services:
   - type: web
     name: elitepro-template
     env: php
-    buildCommand: "./render-build.sh"
-    startCommand: "php -S 0.0.0.0:$PORT -t public"
-    healthCheckPath: /health
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    startCommand: php -S 0.0.0.0:$PORT -t public
     envVars:
       - key: APP_ENV
         value: production
@@ -18,5 +17,3 @@ services:
         value: file
       - key: SESSION_DOMAIN
         value: .onrender.com
-      - key: SESSION_SECURE_COOKIE
-        value: true
