@@ -1,15 +1,73 @@
+# Remove Dockerfile
+rm Dockerfile
+
+# Create render.yaml
+cat > render.yaml << 'EOF'
 services:
   - type: web
     name: elitepro-template
-    dockerfilePath: ./Dockerfile
+    env: php
+    buildCommand: "./render-build.sh"
+    startCommand: "php -S 0.0.0.0:$PORT -t public"
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
+      - key: APP_URL
+        value: https://elitepro-template-1.onrender.com
       - key: DB_CONNECTION
         value: pgsql
       - key: SESSION_DRIVER
-        value: file  # CHANGE TO FILE TO AVOID SESSIONS TABLE ISSUE
+        value: file  # CRITICAL: Use file sessions to avoid database issues
       - key: SESSION_DOMAIN
         value: .onrender.com
+      - key: SESSION_SECURE_COOKIE
+        value: true
+EOF
+
+# Create render-build.sh
+cat > render-build.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "🚀 Laravel Build on Render"
+
+# Install dependencies
+composer install --no-dev --optimize-autoloader
+
+# Create directories
+mkdir -p storage/framework/{sessions,views,cache}
+mkdir -p storage/logs
+
+# Set permissions
+chmod -R 775 storage bootstrap/cache
+
+# Wait for PostgreSQL
+echo "📊 Checking PostgreSQL..."
+until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USERNAME; do
+    echo "Waiting for PostgreSQL..."
+    sleep 2
+done
+echo "✅ PostgreSQL is ready!"
+
+# Run migrations
+echo "🗃️ Running migrations..."
+php artisan migrate --force
+
+# Clear cache
+echo "🧹 Clearing cache..."
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+
+echo "✅ Build complete!"
+EOF
+
+chmod +x render-build.sh
+
+# Push to GitHub
+git add .
+git commit -m "Switch to PHP built-in server for Render"
+git push
